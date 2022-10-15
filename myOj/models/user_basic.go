@@ -14,3 +14,9 @@ type UserBasic struct {
 func (user *UserBasic) TableName() string {
 	return "user_basic"
 }
+
+//
+//func GetUserDetail(identity string) *gorm.DB {
+//	tx := DB.Omit("password").Where("identity = ?", identity)
+//	return tx
+//}
