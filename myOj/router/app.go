@@ -25,6 +25,8 @@ func Router() *gin.Engine {
 	// 用户路由
 	r.GET("/user-detail", service.GetUserDetail)
 	r.POST("/user-login", service.Login)
+	r.POST("/user-register", service.Register)
+	r.POST("/user-code", service.SentCodeToRedis)
 
 	// 提交记录
 	r.GET("/submit-list", service.GetSubmitList)
