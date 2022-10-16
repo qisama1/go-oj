@@ -2,8 +2,6 @@ package test
 
 import (
 	"fmt"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"math/rand"
 	"sync"
 	"testing"
@@ -36,12 +34,15 @@ func TestSample(t *testing.T) {
 	//getFib(10)
 	//wg.Wait()
 	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取详情
-	dsn := "root:123456@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-	_, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
-
+	//dsn := "root:123456@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+	//_, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	//if err != nil {
+	//	panic(err)
+	//}
+	s := "abc"
+	fmt.Printf("%p", &s)
+	s = "abced"
+	fmt.Printf("%p", &s)
 }
 
 func main() {

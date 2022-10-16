@@ -8,6 +8,7 @@ import (
 	"myOj/models"
 	"myOj/utils"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -238,5 +239,52 @@ func SentCodeToRedis(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "发送验证码成功",
+	})
+}
+
+// GetRankList
+// @Tags 公共方法
+// @Summary 获取排行榜
+// @Param page query int false "请输入当前页，默认第一页"
+// @Param size query int false "size"
+// @Success 200 {string} json "{"code":"200","data":""}"
+// @Router /user-rankList [get]
+func GetRankList(c *gin.Context) {
+	page, err := strconv.Atoi(c.Query("page"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "page必须是整数类型",
+		})
+		return
+	}
+	size, err := strconv.Atoi(c.Query("size"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "size必须是整数类型",
+		})
+		return
+	}
+	offset := size * (page - 1)
+	list := make([]models.UserBasic, 0)
+	var count int64
+
+	err = models.DB.Model(new(models.UserBasic)).Count(&count).Order("finish_problem_num DESC, submit_problem_num ASC").
+		Offset(offset).Limit(size).Find(&list).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "select err, err : " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"data": map[string]interface{}{
+			"list":  list,
+			"count": count,
+		},
 	})
 }
