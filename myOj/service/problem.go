@@ -103,8 +103,8 @@ func GetProblemDetail(c *gin.Context) {
 // @Param content formData string true "content"
 // @Param max_runtime formData string true "max_runtime"
 // @Param max_mem formData string true "max_mem"
-// @Param category_ids formData array false "category_ids"
-// @Param test_cases formData array true "test_cases"
+// @Param category_ids formData array false "category_ids" collectionFormat(multi)
+// @Param test_cases formData array true "test_cases" collectionFormat(multi)
 // @Success 200 {string} json "{"code":"200","data":""}"
 // @Router /admin/problem-create [post]
 func ProblemCreate(c *gin.Context) {
@@ -187,10 +187,10 @@ func ProblemCreate(c *gin.Context) {
 		}
 
 		testCaseBasic := &models.TestCase{
-			Identity:  utils.GetUUID(),
-			ProblemId: data.ID,
-			Input:     caseMap["input"],
-			Output:    caseMap["output"],
+			Identity:        utils.GetUUID(),
+			ProblemIdentity: data.Identity,
+			Input:           caseMap["input"],
+			Output:          caseMap["output"],
 		}
 		testCaseBasics = append(testCaseBasics, testCaseBasic)
 	}
@@ -210,4 +210,144 @@ func ProblemCreate(c *gin.Context) {
 		"code":    200,
 		"message": "创建成功",
 	})
+}
+
+// ProblemModify
+// @Tags 内部方法
+// @Summary 修改问题
+// @Param Authorization header string true "Authorization"
+// @Param identity formData string true "identity"
+// @Param title formData string true "title"
+// @Param content formData string true "content"
+// @Param max_runtime formData string true "max_runtime"
+// @Param max_mem formData string true "max_mem"
+// @Param category_ids formData array false "category_ids" collectionFormat(multi)
+// @Param test_cases formData array true "test_cases" collectionFormat(multi)
+// @Success 200 {string} json "{"code":"200","data":""}"
+// @Router /admin/problem-modify [put]
+func ProblemModify(c *gin.Context) {
+	identity := c.PostForm("identity")
+	if identity == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "identity不能为空",
+		})
+		return
+	}
+	title := c.PostForm("title")
+	if title == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "title不能为空",
+		})
+		return
+	}
+	content := c.PostForm("content")
+	if content == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "content不能为空",
+		})
+		return
+	}
+	maxRuntime, _ := strconv.Atoi(c.PostForm("max_runtime"))
+
+	maxMem, _ := strconv.Atoi(c.PostForm("max_mem"))
+
+	categoryIds := c.PostFormArray("category_ids")
+	testCases := c.PostFormArray("test_cases")
+
+	if len(categoryIds) == 0 || len(testCases) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "参数不能为空",
+		})
+		return
+	}
+
+	// 添加事务
+	if err := models.DB.Transaction(func(tx *gorm.DB) error {
+		// 问题基础信息保存
+		problemBasic := models.ProblemBasic{
+			Identity:   utils.GetUUID(),
+			Title:      title,
+			Content:    content,
+			MaxRuntime: maxRuntime,
+			MaxMem:     maxMem,
+		}
+		err := tx.Where("identity = ?", identity).Updates(problemBasic).Error
+		if err != nil {
+			return err
+		}
+		// 查询问题详情
+		// TODO：此处的表结构是有问题的，不应该用id去索引，应该用identity去索引
+		err = tx.Where("identity = ?", identity).Find(&problemBasic).Error
+		if err != nil {
+			return err
+		}
+		// 关联问题分类的更新
+		// 1.删除存在的
+		err = tx.Where("problem_id", problemBasic.ID).Delete(new(models.TestCase)).Error
+		if err != nil {
+			return err
+		}
+		// 2.增加新的
+		pcs := make([]*models.ProblemCategory, 0)
+		for _, id := range categoryIds {
+			intId, _ := strconv.Atoi(id)
+			pcs = append(pcs, &models.ProblemCategory{
+				ProblemId:  problemBasic.ID,
+				CategoryId: uint(intId),
+			})
+		}
+		err = tx.Create(&pcs).Error
+		if err != nil {
+			return err
+		}
+
+		// 关联测试案例的更新
+		// 1.删除已存在的测试案例
+		err = tx.Where("problem_identity = ?", identity).Delete(new(models.TestCase)).Error
+		if err != nil {
+			return err
+		}
+		// 2.增加新的测试案例
+		tcs := make([]*models.TestCase, 0)
+		for _, testCase := range testCases {
+			caseMap := make(map[string]string)
+			err = json.Unmarshal([]byte(testCase), &caseMap)
+			if err != nil {
+				return err
+			}
+			if _, ok := caseMap["input"]; !ok {
+				return fmt.Errorf("修改问题，测试案例没有input，或格式不对")
+			}
+			if _, ok := caseMap["output"]; !ok {
+				return fmt.Errorf("修改问题，测试案例没有output，或格式不对")
+			}
+
+			tcs = append(tcs, &models.TestCase{
+				Identity:        utils.GetUUID(),
+				ProblemIdentity: identity,
+				Input:           caseMap["input"],
+				Output:          caseMap["output"],
+			})
+		}
+		err = tx.Create(tcs).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code": -1,
+			"msg":  "Problem modify err: " + err.Error(),
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "修改问题成功",
+	})
+
 }

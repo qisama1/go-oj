@@ -36,9 +36,12 @@ func Router() *gin.Engine {
 	r.GET("/submit-list", service.GetSubmitList)
 
 	// 管理私有方法
-	// 问题创建
 	authGroup := r.Group("/admin", middlewares.AuthAdminCheck())
+	// 问题创建
 	authGroup.POST("/problem-create", service.ProblemCreate)
+	// 问题修改
+	authGroup.PUT("/problem-modify", service.ProblemModify)
+
 	// 分类列表
 	authGroup.GET("/category-list", service.GetCategoryList)
 	// 分类创建
