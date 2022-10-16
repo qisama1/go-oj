@@ -138,7 +138,23 @@ func CategoryModify(c *gin.Context) {
 // @Router /category-delete [delete]
 func CategoryDelete(c *gin.Context) {
 	identity := c.Query("identity")
-	err := models.DB.Where("identity = ?", identity).Delete(new(models.CategoryBasic)).Error
+	var cnt int64
+	err := models.DB.Model(new(models.ProblemCategory)).Where("category_id = (SELECT id FROM category_basic WHERE identity = ? LIMIT 1)", identity).Count(&cnt).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "Delete err, " + err.Error(),
+		})
+		return
+	}
+	if cnt > 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": 500,
+			"msg":  "表关联问题，不可以删除",
+		})
+		return
+	}
+	err = models.DB.Where("identity = ?", identity).Delete(new(models.CategoryBasic)).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
