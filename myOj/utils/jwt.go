@@ -8,18 +8,20 @@ import (
 type UserClaims struct {
 	Identity string `json:"identity"`
 	Name     string `json:"name"`
+	IsAdmin  int    `json:"is_admin"`
 	jwt.StandardClaims
 }
 
 var myKey = []byte("gin-gorm-oj-key")
 
 // GenerateToken 生成token
-func GenerateToken(identity, name string) (string, error) {
+func GenerateToken(identity, name string, isAdmin int) (string, error) {
 	UserClaim := &UserClaims{
-		Identity: identity,
-		Name:     name,
+		Identity:       identity,
+		Name:           name,
+		IsAdmin:        isAdmin,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: 3000, // 设置过期时间
+			//ExpiresAt: time.Now() + 3000, // 设置过期时间
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaim)

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"myOj/middlewares"
 	"myOj/service"
 )
 
@@ -34,5 +35,7 @@ func Router() *gin.Engine {
 	// 提交记录
 	r.GET("/submit-list", service.GetSubmitList)
 
+	// 管理私有方法
+	r.POST("/problem-create", middlewares.AuthAdminCheck(), service.ProblemCreate)
 	return r
 }

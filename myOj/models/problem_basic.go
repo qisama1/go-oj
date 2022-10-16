@@ -12,6 +12,7 @@ type ProblemBasic struct {
 	Content           string             `gorm:"columns:content;type:varchar(255);" json:"content"` // 文章正文
 	MaxRuntime        int                `gorm:"column:max_runtime;type:int(11);" json:"max_runtime"`
 	MaxMem            int                `gorm:"column:max_mem;type:int(11);" json:"max_mem" `
+	TestCases         []*TestCase        `gorm:"foreignKey:problem_id;references:id"`
 }
 
 func (table *ProblemBasic) TableName() string {
@@ -19,7 +20,7 @@ func (table *ProblemBasic) TableName() string {
 }
 
 func GetProblemList(keyword, categoryIdentity string) *gorm.DB {
-	tx := DB.Model(new(ProblemBasic)).Preload("ProblemCategories").Preload("ProblemCategories.CategoryBasic").
+	tx := DB.Model(new(ProblemBasic)).Preload("ProblemCategories").Preload("ProblemCategories.CategoryBasic").Preload("TestCases").
 		Where("title like ? OR content like ?", "%"+keyword+"%",
 			"%"+keyword+"%") // 指定查询的表
 	if categoryIdentity != "" {
