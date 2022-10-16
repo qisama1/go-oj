@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// AuthAdminCheck 验证是不是有管理权限
-func AuthAdminCheck() gin.HandlerFunc {
+// AuthUserCheck 验证是不是用户登录了
+func AuthUserCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: check user is admin?
 		auth := c.GetHeader("Authorization")
@@ -20,7 +20,7 @@ func AuthAdminCheck() gin.HandlerFunc {
 			})
 			return
 		}
-		if userClaim == nil || userClaim.IsAdmin != 1 {
+		if userClaim == nil {
 			c.Abort()
 			c.JSON(http.StatusOK, gin.H{
 				"code": http.StatusUnauthorized,
@@ -28,6 +28,7 @@ func AuthAdminCheck() gin.HandlerFunc {
 			})
 			return
 		}
+		c.Set("user", userClaim)
 		c.Next()
 	}
 }
