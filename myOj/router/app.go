@@ -37,15 +37,15 @@ func Router() *gin.Engine {
 
 	// 管理私有方法
 	// 问题创建
-	r.POST("/problem-create", middlewares.AuthAdminCheck(), service.ProblemCreate)
+	authGroup := r.Group("/admin", middlewares.AuthAdminCheck())
+	authGroup.POST("/problem-create", service.ProblemCreate)
 	// 分类列表
-	r.GET("/category-list", middlewares.AuthAdminCheck(), service.GetCategoryList)
+	authGroup.GET("/category-list", service.GetCategoryList)
 	// 分类创建
-	r.POST("/category-create", middlewares.AuthAdminCheck(), service.CategoryCreate)
+	authGroup.POST("/category-create", service.CategoryCreate)
 	// 分类修改
-	r.PUT("/category-modify", middlewares.AuthAdminCheck(), service.CategoryModify)
+	authGroup.PUT("/category-modify", service.CategoryModify)
 	// 分类删除
-	r.DELETE("/category-delete", middlewares.AuthAdminCheck(), service.CategoryDelete)
-
+	authGroup.DELETE("/category-delete", service.CategoryDelete)
 	return r
 }
