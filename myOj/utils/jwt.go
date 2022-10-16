@@ -43,7 +43,6 @@ func AnalyseToken(token string) (*UserClaims, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(claims)
 	if !claims.Valid {
 		return nil, fmt.Errorf("token is invalid")
 	}

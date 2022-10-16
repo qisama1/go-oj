@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"myOj/utils"
 	"net/http"
@@ -12,7 +11,6 @@ func AuthAdminCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: check user is admin?
 		auth := c.GetHeader("Authorization")
-		fmt.Println(auth)
 		userClaim, err := utils.AnalyseToken(auth)
 		if err != nil {
 			c.Abort()
